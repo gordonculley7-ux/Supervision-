@@ -2,3 +2,7 @@ node_modules/
 dist/
 *.log
 .DS_Store
+# Vite transient build artifact
+vite.config.ts.timestamp-*
+# Lockfile omitted to avoid cross-platform (Linux/Windows) optional-dep mismatches
+package-lock.json

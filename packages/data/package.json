@@ -1,0 +1,11 @@
+{
+  "name": "@supervision-tracker/data",
+  "version": "0.1.0",
+  "description": "Local persistence (SQLite) implementing the shared DataAdapter interface.",
+  "type": "module",
+  "scripts": {
+    "test": "node --import tsx --test test/*.test.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "license": "UNLICENSED"
+}
