@@ -1,23 +1,30 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   computeProgress, findRequirementSets, ALL_REQUIREMENT_SETS,
   exportEncryptedBackup, importEncryptedBackup,
 } from '@core';
 import type {
   RequirementSet, ProgressReport, Metric, CeCategory,
-  PracticeEntry, SupervisionEntry, CeuEntry, BackupPayload,
+  PracticeEntry, SupervisionEntry, CeuEntry, BackupPayload, RecordBook,
 } from '@core';
-import { InMemoryAdapter } from './adapters/inMemory.js';
+import type { DataAdapter } from '@data-adapter';
+import { createAdapter } from './adapters/createAdapter.js';
 
 const uid = () => (crypto?.randomUUID ? crypto.randomUUID() : 'id' + Math.random().toString(36).slice(2));
 const uniq = <T,>(a: T[]) => [...new Set(a)];
+const EMPTY_BOOK: RecordBook = { practice: [], supervision: [], ceu: [] };
 
 type Tab = 'setup' | 'log' | 'progress' | 'backup';
 
 export default function App() {
-  const adapter = useRef(new InMemoryAdapter());
+  const [adapter, setAdapter] = useState<DataAdapter | null>(null);
   const [, setVersion] = useState(0);
   const bump = () => setVersion(v => v + 1);
+  useEffect(() => {
+    let alive = true;
+    createAdapter().then(a => { if (alive) setAdapter(a); });
+    return () => { alive = false; };
+  }, []);
 
   const professions = uniq(ALL_REQUIREMENT_SETS.map(r => r.profession));
   const [profession, setProfession] = useState(professions[0]);
@@ -34,7 +41,7 @@ export default function App() {
 
   const [tab, setTab] = useState<Tab>('setup');
 
-  const book = adapter.current.getRecordBook();
+  const book = adapter ? adapter.getRecordBook() : EMPTY_BOOK;
   const initialProgress = useMemo(
     () => (initialSet ? computeProgress(initialSet, book) : undefined),
     [initialSet, book.practice.length, book.supervision.length]
@@ -43,6 +50,10 @@ export default function App() {
     () => (renewalSet ? computeProgress(renewalSet, book) : undefined),
     [renewalSet, book.ceu.length]
   );
+
+  if (!adapter) {
+    return <div className="app"><header className="top"><h1>Supervision &amp; CEU Tracker</h1><span className="badge">Lite</span></header><p className="empty">Loading…</p></div>;
+  }
 
   return (
     <div className="app">
@@ -78,7 +89,7 @@ export default function App() {
       )}
 
       {tab === 'log' && (
-        <LogTab adapter={adapter.current} book={book} onChange={bump} hasRenewal={!!renewalSet} />
+        <LogTab adapter={adapter} book={book} onChange={bump} hasRenewal={!!renewalSet} />
       )}
 
       {tab === 'progress' && (
@@ -88,7 +99,7 @@ export default function App() {
 
       {tab === 'backup' && (
         <BackupTab
-          adapter={adapter.current}
+          adapter={adapter}
           credential={{ profession, state, pathway }}
           onImported={(cred) => {
             if (cred) {
@@ -154,7 +165,7 @@ function SummaryLine({ set }: { set: RequirementSet }) {
 
 /* -------------------------------- Log -------------------------------- */
 function LogTab({ adapter, book, onChange, hasRenewal }: {
-  adapter: InMemoryAdapter; book: ReturnType<InMemoryAdapter['getRecordBook']>;
+  adapter: DataAdapter; book: RecordBook;
   onChange: () => void; hasRenewal: boolean;
 }) {
   const [pDate, setPDate] = useState(today());
@@ -250,7 +261,7 @@ function LogTab({ adapter, book, onChange, hasRenewal }: {
 function ProgressTab({ initialSet, initialProgress, renewalSet, renewalProgress, book }: {
   initialSet?: RequirementSet; initialProgress?: ProgressReport;
   renewalSet?: RequirementSet; renewalProgress?: ProgressReport;
-  book: ReturnType<InMemoryAdapter['getRecordBook']>;
+  book: RecordBook;
 }) {
   const totalPractice = book.practice.reduce((a, p) => a + p.totalHours, 0);
   const totalSup = book.supervision.reduce((a, s) => a + s.durationHours, 0);
@@ -336,7 +347,7 @@ function today() { return new Date().toISOString().slice(0, 10); }
 
 /* ------------------------------- Backup ------------------------------ */
 function BackupTab({ adapter, credential, onImported }: {
-  adapter: InMemoryAdapter;
+  adapter: DataAdapter;
   credential: { profession: string; state: string; pathway: string };
   onImported: (cred?: { profession: string; state: string; pathway: string }) => void;
 }) {

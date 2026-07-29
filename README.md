@@ -15,7 +15,8 @@ See `docs/Supervision_CEU_Tracker_Phase1_Spec.docx` and
 ```
 packages/core        Shared TypeScript domain + rules-as-data engine + progress math  [BUILT ✓]
 packages/data        Local SQLite persistence implementing the DataAdapter interface  [BUILT ✓]
-apps/desktop         Lite React UI: setup, logging, live progress, encrypted backup    [BUILT ✓]
+apps/desktop         Lite React UI + Tauri v2 desktop shell + SQLite persistence        [BUILT ✓]
+  src-tauri/           Rust shell, SQL migrations, window config, icons               [compile on Windows]
   src/types.ts         Domain + RequirementSet + record + progress types
   src/rules/           Rules-as-data (Minnesota seeded: all 4 licenses, every route)
   src/engine.ts        computeProgress(requirementSet, recordBook) -> ProgressReport
@@ -35,18 +36,37 @@ npm test             # runs all package test suites (19 tests)
 npm run typecheck    # type-checks every package
 ```
 
-## Run the Lite app (dev)
+## Run in the browser (fast dev)
 
 ```
 cd apps/desktop
-npm run dev          # opens the Lite UI in your browser at http://localhost:5173
-npm run build        # production bundle (also runs the type-check)
+npm run dev          # http://localhost:5173  (in-memory data, resets on refresh)
 ```
 
-The desktop dev server renders the exact React UI that the Tauri shell will wrap.
-It uses an in-memory adapter in the browser; the Tauri build swaps in the encrypted
-SQLite store behind the same DataAdapter interface. Tauri packaging + Stripe license
-flow are the next increments.
+## Build the real Windows desktop app (Tauri)
+
+One-time prerequisites on the Windows machine:
+1. Rust toolchain — install from https://rustup.rs (includes cargo).
+2. Microsoft C++ Build Tools (Visual Studio Build Tools, "Desktop development with C++").
+3. WebView2 runtime — preinstalled on Windows 10/11.
+
+Then:
+
+```
+cd apps/desktop
+npm install
+npm run tauri:dev    # launches the desktop app; compiles Rust on first run (slow once)
+npm run tauri:build  # produces installers in src-tauri/target/release/bundle/
+```
+
+On desktop, data persists to a local SQLite database (`supervision.db` in the app's
+data folder) via the same DataAdapter interface the browser build uses — no UI change.
+
+### Remaining desktop hardening
+- At-rest DB encryption (SQLCipher) is not yet wired; the desktop DB is currently
+  plain local SQLite. Backup EXPORT files are already AES-GCM encrypted. Enabling
+  SQLCipher is a documented follow-up.
+- Stripe one-time license-key flow is the next increment.
 
 ## Status
 
