@@ -17,6 +17,7 @@ packages/core        Shared TypeScript domain + rules-as-data engine + progress 
 packages/data        Local SQLite persistence implementing the DataAdapter interface  [BUILT ✓]
 apps/desktop         Lite React UI + Tauri v2 desktop shell + SQLite persistence        [BUILT ✓]
   src-tauri/           Rust shell, SQL migrations, window config, icons               [compile on Windows]
+apps/web             Web edition: Next.js + Postgres/Prisma + Auth.js (Railway)        [BUILT ✓, deploy on Railway]
   src/types.ts         Domain + RequirementSet + record + progress types
   src/rules/           Rules-as-data (Minnesota seeded: all 4 licenses, every route)
   src/engine.ts        computeProgress(requirementSet, recordBook) -> ProgressReport
@@ -74,6 +75,7 @@ data folder) via the same DataAdapter interface the browser build uses — no UI
 - **Local SQLite data layer (DataAdapter): built, 3/3 integration tests passing.**
 - **Lite React UI (setup / logging / live progress): built, type-checks and production-builds; 3/3 UI data-path tests passing.**
 - **Encrypted backup / restore (passphrase, AES-GCM): built; 4/4 crypto round-trip tests passing. Doubles as the Lite→Web migration file.**
+- **Web edition foundation (Next.js + Postgres + Auth.js): built, type-checks clean. Accounts, credential setup, online logging, live progress reusing core. Deploy-ready (Dockerfile + railway.json). Run `next build`/deploy on Railway (Prisma engines are network-blocked in this build env).**
 - Desktop UI, local encrypted DB, Tauri shell, and Stripe license flow are the next
   increment. Final signed Windows/macOS installers are produced via the app's build
   scripts on a Windows/macOS machine or CI (cannot be cross-compiled here).

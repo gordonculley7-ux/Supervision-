@@ -1,0 +1,80 @@
+// Postgres schema for the Web (Railway) edition.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  name          String?
+  role          String   @default("trainee") // trainee | supervisor | both
+  createdAt     DateTime @default(now())
+
+  credentials       Credential[]
+  practiceEntries   PracticeEntry[]
+  supervisionEntries SupervisionEntry[]
+  ceuEntries        CeuEntry[]
+}
+
+model Credential {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profession       String   // LPCC | LGSW | LMFT | LADC
+  state            String
+  pathway          String
+  requirementSetId String
+  startDate        DateTime?
+  renewalDate      DateTime?
+  createdAt        DateTime @default(now())
+
+  @@index([userId])
+}
+
+model PracticeEntry {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date               DateTime
+  totalHours         Float
+  directContactHours Float    @default(0)
+  relationalHours    Float    @default(0)
+  createdAt          DateTime @default(now())
+
+  @@index([userId])
+}
+
+model SupervisionEntry {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date          DateTime
+  durationHours Float
+  format        String   // individual | group
+  setting       String   // in_person | remote
+  supervisorId  String?
+  signedOff     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+}
+
+model CeuEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime
+  hours     Float
+  category  String
+  title     String?
+  provider  String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
