@@ -9,5 +9,14 @@ const nextConfig = {
   transpilePackages: ['@supervision-tracker/core'],
   output: 'standalone', // smaller Railway image
   eslint: { ignoreDuringBuilds: true },
+  webpack: (config) => {
+    // The shared @supervision-tracker/core package uses NodeNext-style '.js'
+    // import specifiers that point at '.ts' source. Teach webpack to resolve them.
+    config.resolve.extensionAlias = {
+      '.js': ['.ts', '.tsx', '.js'],
+      '.mjs': ['.mts', '.mjs'],
+    };
+    return config;
+  },
 };
 export default nextConfig;
