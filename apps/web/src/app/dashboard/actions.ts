@@ -1,8 +1,8 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { auth, signOut } from '@/lib/auth.js';
-import { prisma } from '@/lib/prisma.js';
+import { auth, signOut } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 import { findRequirementSets } from '@supervision-tracker/core';
 
 async function requireUser(): Promise<string> {

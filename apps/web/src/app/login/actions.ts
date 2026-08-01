@@ -1,6 +1,6 @@
 'use server';
 import { AuthError } from 'next-auth';
-import { signIn } from '@/lib/auth.js';
+import { signIn } from '@/lib/auth';
 
 export async function loginAction(_prev: { error?: string } | undefined, formData: FormData) {
   try {

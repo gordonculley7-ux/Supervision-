@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { ALL_REQUIREMENT_SETS, findRequirementSets } from '@supervision-tracker/core';
-import { saveCredential } from './actions.js';
+import { saveCredential } from './actions';
 
 const uniq = <T,>(a: T[]) => [...new Set(a)];
 

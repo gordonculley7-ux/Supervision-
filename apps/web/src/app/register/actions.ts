@@ -2,7 +2,7 @@
 import bcrypt from 'bcryptjs';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { prisma } from '@/lib/prisma.js';
+import { prisma } from '@/lib/prisma';
 
 const schema = z.object({
   email: z.string().email(),

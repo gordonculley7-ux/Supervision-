@@ -1,13 +1,13 @@
 import { redirect } from 'next/navigation';
-import { auth } from '@/lib/auth.js';
-import { prisma } from '@/lib/prisma.js';
-import { toRecordBook } from '@/lib/records.js';
+import { auth } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import { toRecordBook } from '@/lib/records';
 import {
   computeProgress, getRequirementSet, findRequirementSets,
 } from '@supervision-tracker/core';
 import type { Metric } from '@supervision-tracker/core';
-import CredentialSetup from './CredentialSetup.js';
-import { addPractice, addSupervision, addCeu, deleteEntry, signOutAction } from './actions.js';
+import CredentialSetup from './CredentialSetup';
+import { addPractice, addSupervision, addCeu, deleteEntry, signOutAction } from './actions';
 
 export const dynamic = 'force-dynamic';
 
