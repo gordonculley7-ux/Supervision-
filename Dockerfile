@@ -7,7 +7,7 @@ FROM base AS deps
 COPY package.json ./
 COPY packages/core/package.json packages/core/
 COPY apps/web/package.json apps/web/
-RUN npm install --workspaces --include-workspace-root --no-audit --no-fund
+RUN npm install --workspaces --include-workspace-root --ignore-scripts --no-audit --no-fund
 
 FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
