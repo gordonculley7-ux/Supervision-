@@ -16,6 +16,7 @@ RUN npm --workspace @supervision-tracker/web run build
 
 FROM base AS run
 ENV NODE_ENV=production
+ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 # Next standalone server (monorepo layout: apps/web/server.js + bundled node_modules)
 COPY --from=build /app/apps/web/.next/standalone ./
