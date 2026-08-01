@@ -20,6 +20,10 @@ model User {
   practiceEntries   PracticeEntry[]
   supervisionEntries SupervisionEntry[]
   ceuEntries        CeuEntry[]
+
+  traineeLinks    SupervisionLink[] @relation("TraineeLinks")
+  supervisorLinks SupervisionLink[] @relation("SupervisorLinks")
+  attestations    Attestation[]     @relation("SupervisorAttestations")
 }
 
 model Credential {
@@ -62,6 +66,8 @@ model SupervisionEntry {
   signedOff     Boolean  @default(false)
   createdAt     DateTime @default(now())
 
+  attestation   Attestation?
+
   @@index([userId])
 }
 
@@ -77,4 +83,39 @@ model CeuEntry {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+
+model SupervisionLink {
+  id              String   @id @default(cuid())
+  traineeId       String
+  trainee         User     @relation("TraineeLinks", fields: [traineeId], references: [id], onDelete: Cascade)
+  supervisorId    String?
+  supervisor      User?    @relation("SupervisorLinks", fields: [supervisorId], references: [id], onDelete: SetNull)
+  supervisorEmail String
+  status          String   @default("pending") // pending | active | ended
+  createdAt       DateTime @default(now())
+  startDate       DateTime?
+  endedAt         DateTime?
+
+  @@index([traineeId])
+  @@index([supervisorId])
+  @@index([supervisorEmail])
+}
+
+model Attestation {
+  id                 String   @id @default(cuid())
+  supervisionEntryId String   @unique
+  supervisionEntry   SupervisionEntry @relation(fields: [supervisionEntryId], references: [id], onDelete: Cascade)
+  supervisorId       String
+  supervisor         User     @relation("SupervisorAttestations", fields: [supervisorId], references: [id], onDelete: Cascade)
+  traineeId          String
+  signedName         String
+  credentialTitle    String?
+  statement          String
+  payloadHash        String
+  createdAt          DateTime @default(now())
+
+  @@index([supervisorId])
+  @@index([traineeId])
 }

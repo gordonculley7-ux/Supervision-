@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
@@ -7,7 +8,7 @@ import {
 } from '@supervision-tracker/core';
 import type { Metric } from '@supervision-tracker/core';
 import CredentialSetup from './CredentialSetup';
-import { addPractice, addSupervision, addCeu, deleteEntry, signOutAction } from './actions';
+import { addPractice, addSupervision, addCeu, deleteEntry, signOutAction, inviteSupervisor, endLink } from './actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +41,7 @@ export default async function Dashboard() {
       <div className="topbar">
         <div><strong style={{ color: 'var(--blue)' }}>Supervision &amp; CEU Tracker</strong> <span className="badge">Web</span></div>
         <div className="who">
-          {session.user.email}
+          <Link href="/supervisor">Supervisor view</Link> · {session.user.email}
           <form action={signOutAction} style={{ display: 'inline', marginLeft: 12 }}>
             <button className="ghost" type="submit">Sign out</button>
           </form>
@@ -69,6 +70,10 @@ async function DashboardBody({ userId, credential }: { userId: string; credentia
     prisma.ceuEntry.findMany({ where: { userId }, orderBy: { date: 'desc' } }),
   ]);
   const book = toRecordBook({ practice, supervision, ceu });
+  const links = await prisma.supervisionLink.findMany({
+    where: { traineeId: userId, status: { in: ['pending', 'active'] } },
+    orderBy: { createdAt: 'desc' },
+  });
 
   const initialSet = getRequirementSet(credential.requirementSetId)
     ?? findRequirementSets({ profession: credential.profession, state: credential.state, purpose: 'initial_licensure', pathway: credential.pathway })[0];
@@ -85,6 +90,36 @@ async function DashboardBody({ userId, credential }: { userId: string; credentia
           <div className="stat"><div className="n">{sum(book.supervision.map(s => s.durationHours))}</div><div className="k">supervision hrs</div></div>
           <div className="stat"><div className="n">{sum(book.ceu.map(c => c.hours))}</div><div className="k">CE hrs</div></div>
         </div>
+      </div>
+
+      <div className="card">
+        <h2>Supervisors</h2>
+        <div className="sub">Invite your supervisor by email. Once they accept, they can sign off on your supervision hours.</div>
+        <form action={inviteSupervisor} className="row" style={{ alignItems: 'flex-end' }}>
+          <div className="field"><label>Supervisor email</label><input name="supervisorEmail" type="email" placeholder="supervisor@example.com" required /></div>
+          <button className="primary" type="submit">Send invite</button>
+        </form>
+        {links.length === 0 ? (
+          <div className="empty">No supervisors linked yet.</div>
+        ) : (
+          <table className="log">
+            <thead><tr><th>Supervisor</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              {links.map((l: any) => (
+                <tr key={l.id}>
+                  <td>{l.supervisorEmail}</td>
+                  <td>{l.status === 'active' ? 'Linked' : 'Invite sent'}</td>
+                  <td style={{ textAlign: 'right' }}>
+                    <form action={endLink} style={{ display: 'inline' }}>
+                      <input type="hidden" name="linkId" value={l.id} />
+                      <button className="ghost" type="submit">{l.status === 'active' ? 'End' : 'Cancel'}</button>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {initialProgress && (
@@ -127,7 +162,7 @@ async function DashboardBody({ userId, credential }: { userId: string; credentia
           </div>
           <button className="primary" type="submit">Add supervision</button>
         </form>
-        <EntryTable kind="supervision" rows={book.supervision.map(s => [s.date, `${s.durationHours}h`, `${s.format}, ${s.setting.replace('_', ' ')}`, s.id])} />
+        <EntryTable kind="supervision" rows={book.supervision.map(s => [s.date, `${s.durationHours}h`, `${s.format}, ${s.setting.replace('_', ' ')}${s.signedOff ? ' · ✓ signed' : ''}`, s.id])} />
       </div>
 
       <div className="card">

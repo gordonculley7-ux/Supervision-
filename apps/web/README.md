@@ -9,9 +9,11 @@ rules engine, so hour/CEU calculations are identical to the Lite app.
 - Online logging of practice hours, supervision, and CEUs (stored in Postgres).
 - Live progress vs. the board requirements, computed by the shared core.
 - Per-user data isolation (every query scoped to the signed-in user).
+- Trainee↔supervisor linking (invite by email, accept/decline, end).
+- Supervisor e-signature sign-off with a tamper-evident SHA-256 attestation hash.
 
 ## Not yet built (later increments)
-- Trainee↔supervisor linking, e-signature sign-off, calendar sync.
+- Calendar sync.
 - Stripe subscription billing.
 - Encrypted-backup import (Lite→Web migration) — the core supports it; UI pending.
 

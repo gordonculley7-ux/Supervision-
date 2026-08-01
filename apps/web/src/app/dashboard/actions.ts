@@ -76,3 +76,28 @@ export async function deleteEntry(formData: FormData) {
 export async function signOutAction() {
   await signOut({ redirectTo: '/login' });
 }
+
+// -------- Trainee: manage supervisors --------
+export async function inviteSupervisor(formData: FormData) {
+  const traineeId = await requireUser();
+  const email = String(formData.get('supervisorEmail') ?? '').toLowerCase().trim();
+  if (!email || !email.includes('@')) return;
+  const existing = await prisma.supervisionLink.findFirst({
+    where: { traineeId, supervisorEmail: email, status: { in: ['pending', 'active'] } },
+  });
+  if (existing) { revalidatePath('/dashboard'); return; }
+  await prisma.supervisionLink.create({
+    data: { traineeId, supervisorEmail: email, status: 'pending' },
+  });
+  revalidatePath('/dashboard');
+}
+
+export async function endLink(formData: FormData) {
+  const userId = await requireUser();
+  const id = String(formData.get('linkId'));
+  const link = await prisma.supervisionLink.findUnique({ where: { id } });
+  if (!link || (link.traineeId !== userId && link.supervisorId !== userId)) return;
+  await prisma.supervisionLink.update({ where: { id }, data: { status: 'ended', endedAt: new Date() } });
+  revalidatePath('/dashboard');
+  revalidatePath('/supervisor');
+}
